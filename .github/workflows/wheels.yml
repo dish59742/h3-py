@@ -93,11 +93,11 @@ jobs:
           twine upload wheelhouse/*
           
   arm64_make_wheels:
-    name: build aarch64 wheel for 
+    name: build aarch64 wheel
     runs-on: [ubuntu-latest]
     strategy:
       matrix:
-       python_tag: [ "cp35-*", "cp36-*", "cp37-*", "cp38-*", "cp39-*"]
+       python_tag: [ "cp36-*", "cp37-*", "cp38-*", "cp39-*"]
 
     steps:
 
