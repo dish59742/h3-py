@@ -95,6 +95,9 @@ jobs:
   arm64_make_wheels:
     name: build aarch64 wheel for 
     runs-on: [ubuntu-latest]
+    strategy:
+      matrix:
+       python_tag: [ "cp35-*", "cp36-*", "cp37-*", "cp38-*", "cp39-*"]
 
     steps:
 
@@ -117,11 +120,11 @@ jobs:
       - name: Build Linux
         env:
           CIBW_ARCHS_LINUX: aarch64
+          CIBW_BUILD: ${{matrix.python_tag}}
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
       - name: Make sdist
-        if: startsWith(matrix.os, 'ubuntu')
         run: |
           pip install --upgrade scikit-build
           python setup.py sdist --dist-dir=wheelhouse
