@@ -27,6 +27,11 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: "${{ matrix.python-version }}"
+          
+      - name: Set up QEMU
+        if: startsWith(matrix.os, 'ubuntu-latest')
+        id: qemu
+        uses: docker/setup-qemu-action@v1
 
       ## Start Windows stuff
       - uses: ilammy/msvc-dev-cmd@v1.5.0
@@ -46,3 +51,14 @@ jobs:
 
       - name: Tests
         run: pytest --cov=h3 --full-trace
+        
+      - name: Test with pytest
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+            quay.io/pypa/manylinux2014_aarch64 \
+            bash -exc '\
+            source .env/bin/activate && \
+            pip install pytest setuptools wheel && \
+            pip install .[all] && \
+            pytest --cov=h3 --full-trace && \
+            deactivate'
