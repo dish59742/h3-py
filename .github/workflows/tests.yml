@@ -21,9 +21,9 @@ jobs:
             python-version: 2.7
             pyver: cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39
           - os: macos-latest
-            pyver: cp36-cp36m
+            pyver: cp36-cp36m, cp37-cp37m
           - os: ubuntu-latest
-            pyver: cp36-cp36m
+            pyver: cp36-cp36m, cp37-cp37m
     
             
     steps:
