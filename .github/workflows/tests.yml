@@ -79,7 +79,6 @@ jobs:
             bash -exc '${{ env.py }} -m pip install virtualenv && ${{ env.py }} -m venv .env && \
             source .env/bin/activate && \
             python -m pip install --upgrade pip && \
-            pip install -e . && \
             deactivate'
     - name: Test with pytest
       run: |
@@ -87,7 +86,7 @@ jobs:
             ${{ env.img }} \
             bash -exc '\
             source .env/bin/activate && \
-            pip install pytest setuptools wheel && \
+            pip install --upgrade pip setuptools wheel && \
             pip install .[all] && \
             pytest --cov=h3 --full-trace && \
             deactivate'
