@@ -114,28 +114,27 @@ jobs:
       - uses: docker/setup-qemu-action@v1
         name: Set up QEMU
 
-      - name: Install cibuildwheel
-        run: pip install --upgrade cibuildwheel
-
-      - name: Build Linux
+      #- name: Install cibuildwheel
+       # run: pip install --upgrade cibuildwheel
+       
+      - uses: pypa/cibuildwheel@v1.11.0
         env:
           CIBW_ARCHS_LINUX: aarch64
           CIBW_BUILD: ${{matrix.python_tag}}
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
 
-      - name: Make sdist
-        run: |
-          pip install --upgrade scikit-build
-          python setup.py sdist --dist-dir=wheelhouse
+      #- name: Build Linux
+        env:
+       #   CIBW_ARCHS_LINUX: aarch64
+        #  CIBW_BUILD: ${{matrix.python_tag}}
+        #run: |
+         # python -m cibuildwheel --output-dir wheelhouse
 
 
       ## Upload
 
       - name: Check with Twine
         run: |
-          pip install --upgrade twine
-          twine check wheelhouse/*
+          pipx run twine check wheelhouse/*
 
       - name: Upload artifacts to GitHub
         if: github.event_name == 'release'
@@ -150,4 +149,4 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.pypi_password }}
         run: |
-          twine upload wheelhouse/*
+          pipx run twine upload wheelhouse/*
