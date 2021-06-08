@@ -14,12 +14,12 @@ env:
 
 jobs:
   make_wheels:
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-        arch: [x86_64, aarch64]
+        arch: [auto, aarch64]
         exclude:
           - os: macos-latest
             arch: aarch64
@@ -51,9 +51,11 @@ jobs:
       ## Build
 
       - uses: pypa/cibuildwheel@v1.11.0
+        env:
+          CIBW_ARCHS: ${{ matrix.arch }}
 
       - name: Make sdist
-        if: startsWith(matrix.os, 'ubuntu')
+        if: startsWith(matrix.os, 'ubuntu') && matrix.arch != 'aarch64'
         run: |
           pipx run build --sdist --outdir=wheelhouse
       ## Upload
