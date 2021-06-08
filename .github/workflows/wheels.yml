@@ -10,6 +10,7 @@ on:
 env:
   CIBW_TEST_REQUIRES: pytest numpy
   CIBW_TEST_COMMAND: pytest {project}/tests
+  CIBW_SKIP: pp* cp27*-win* *-win32 *-manylinux_i686
 
 jobs:
   make_wheels:
@@ -18,6 +19,12 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
+        arch: [x86_64, aarch64]
+        exclude:
+          - os: macos-latest
+            arch: aarch64
+          - os: windows-latest
+            arch: aarch64
 
     steps:
 
@@ -26,116 +33,34 @@ jobs:
       - uses: actions/checkout@v2.3.3
         with:
           submodules: recursive
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
 
       - uses: ilammy/msvc-dev-cmd@v1.5.0
         if: startsWith(matrix.os, 'windows')
 
-
-      ## Build across platforms
-
-      - name: Install cibuildwheel
-        run: pip install --upgrade cibuildwheel
-
-      - name: Build Windows
+      - name: Set Windows variables
         if: startsWith(matrix.os, 'windows')
-        env:
-          CC: cl.exe
-          CXX: cl.exe
-          CIBW_SKIP: pp* cp27* *-win32
+        shell: bash
         run: |
-          python -m cibuildwheel --output-dir wheelhouse
+          echo "CC=cl.exe" >> $GITHUB_ENV
+          echo "CXX=cl.exe" >> $GITHUB_ENV
+          
+      - uses: docker/setup-qemu-action@v1
+        if: ${{ matrix.arch == 'aarch64' }}
+        name: Set up QEMU
+          
+      ## Build
 
-      - name: Build Mac
-        if: startsWith(matrix.os, 'mac')
-        env:
-          CIBW_SKIP: pp*
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-
-      - name: Build Linux
-        if: startsWith(matrix.os, 'ubuntu')
-        env:
-          CIBW_SKIP: pp* *-manylinux_i686
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
+      - uses: pypa/cibuildwheel@v1.11.0
 
       - name: Make sdist
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          pip install --upgrade scikit-build
-          python setup.py sdist --dist-dir=wheelhouse
-
-
-      ## Upload
-
-      - name: Check with Twine
-        run: |
-          pip install --upgrade twine
-          twine check wheelhouse/*
-
-      - name: Upload artifacts to GitHub
-        if: github.event_name == 'release'
-        uses: actions/upload-artifact@v2
-        with:
-          name: wheels
-          path: ./wheelhouse
-
-      - name: Release to PyPI
-        if: github.event_name == 'release' && github.event.action == 'published'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.pypi_password }}
-        run: |
-          twine upload wheelhouse/*
-          
-  arm64_make_wheels:
-    name: build aarch64 wheel
-    runs-on: [ubuntu-latest]
-    strategy:
-      matrix:
-       python_tag: [ "cp36-*", "cp37-*", "cp38-*", "cp39-*"]
-
-    steps:
-
-      ## Setup Env
-
-      - uses: actions/checkout@v2.3.3
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-          
-      - uses: docker/setup-qemu-action@v1
-        name: Set up QEMU
-
-      #- name: Install cibuildwheel
-       # run: pip install --upgrade cibuildwheel
-       
-      - uses: pypa/cibuildwheel@v1.11.0
-        env:
-          CIBW_ARCHS_LINUX: aarch64
-          CIBW_BUILD: ${{matrix.python_tag}}
-
-      #- name: Build Linux
-        #env:
-       #   CIBW_ARCHS_LINUX: aarch64
-        #  CIBW_BUILD: ${{matrix.python_tag}}
-        #run: |
-         # python -m cibuildwheel --output-dir wheelhouse
-
-
+          pipx run build --sdist --outdir=wheelhouse
       ## Upload
 
       - name: Check with Twine
         run: |
           pipx run twine check wheelhouse/*
-
       - name: Upload artifacts to GitHub
         if: github.event_name == 'release'
         uses: actions/upload-artifact@v2
